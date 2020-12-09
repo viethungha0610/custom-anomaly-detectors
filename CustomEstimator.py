@@ -59,3 +59,31 @@ class MultivariateTDistribution(MultivariateGaussian):
         assert pdf_X.shape == (X_test.shape[0],), f"The predicted probabilities must be a {X_test.shape[0]}-dimensional vector"
         predictions = np.where(pdf_X < self.epsilon, 1, 0)
         return predictions
+
+class SimpleAnomalyDetector(BaseEstimator):
+    def __init__(self, epsilon=None):
+        self.epsilon = epsilon
+
+    def fit(self, train_data):
+        X = np.array(train_data)
+        self.mu = np.mean(X, axis=0).reshape(-1, 1)
+        # Calculating n-dimensional vector of feature variances
+        self.sigma = np.var(X, axis=0).reshape(-1, 1)
+        assert self.mu.shape == (X.shape[1], 1)
+        assert self.sigma.shape == (X.shape[1], 1)
+        return self
+
+    def predict(self, test_data):
+        X_test = np.array(test_data)
+        mu = self.mu
+        sigma = self.sigma
+        term_1 = -1 * np.square(X_test - np.tile(mu, len(X_test)).T)
+        term_2 = 2 * np.tile(sigma, len(X_test)).T
+        term_3 = np.exp(term_1 / term_2)
+        term_4 = (1 / ((2*np.pi)**0.5 * np.power(sigma, np.array(0.5))))
+        term_4 = np.tile(term_4, len(X_test)).T
+        term_5 = term_3 * term_4
+        pdf_X = np.prod(term_5, axis=1)
+        assert pdf_X.shape == (X_test.shape[0],), f"The predicted probabilities must be a {X_test.shape[0]}-dimensional vector"
+        predictions = np.where(pdf_X < self.epsilon, 1, 0)
+        return predictions
