@@ -1,17 +1,15 @@
-# Custom Multivariate Gaussian anomaly detection classifier
+# Custom anomaly detectors
 from sklearn.base import BaseEstimator
 import numpy as np
-from math import gamma, pow, pi
+from math import gamma, pi
 from scipy.stats import multivariate_normal
 
 class MultivariateGaussian(BaseEstimator):
     """
-    Anomaly detector using the Multivariate Gaussian (Normal) distribution
+    Anomaly detector using the Multivariate Gaussian class
+    Based on Andrew Ng's lecture
     """
     def __init__(self, epsilon=None):
-        """
-        The main hyperparameter is epsilon. The estimator will flag an observation as anomaly if p(x) < epsilon.
-        """
         self.epsilon = epsilon
     
     def fit(self, train_data):
@@ -26,7 +24,7 @@ class MultivariateGaussian(BaseEstimator):
     def predict(self, test_data):
         X_test = np.array(test_data)
         p_X = multivariate_normal.pdf(X_test, mean=self.mu, cov=self.Sigma, allow_singular=True)
-        assert p_X.shape == (X_test.shape[0],), f"The predicted probabilities must be a {X_test.shape[0]}-dimensional vector"
+        assert p_X.shape == (X_test.shape[0],), f"The predicted probability densities must be a {X_test.shape[0]}-dimensional vector"
         # Calculating m-dimensional prediction vector (probability density function)
         predictions = np.where(p_X < self.epsilon, 1, 0)
         return predictions
@@ -56,18 +54,23 @@ class MultivariateTDistribution(MultivariateGaussian):
             pdf_x = term_1 * term_2
             pdf_list.append(pdf_x)
         pdf_X = np.array(pdf_list)
-        assert pdf_X.shape == (X_test.shape[0],), f"The predicted probabilities must be a {X_test.shape[0]}-dimensional vector"
+        assert pdf_X.shape == (X_test.shape[0],), f"The predicted probability densities must be a {X_test.shape[0]}-dimensional vector"
         predictions = np.where(pdf_X < self.epsilon, 1, 0)
         return predictions
 
 class SimpleAnomalyDetector(BaseEstimator):
+    """
+    Simple anomaly detector, a predicted probability density is the product of all features' probabilities.
+    Based on Andrew Ng's lecture.
+    """
     def __init__(self, epsilon=None):
         self.epsilon = epsilon
 
     def fit(self, train_data):
         X = np.array(train_data)
+        # Calculating n-dimensional mean vector (mu)
         self.mu = np.mean(X, axis=0).reshape(-1, 1)
-        # Calculating n-dimensional vector of feature variances
+        # Calculating n-dimensional vector of feature variances (sigma)
         self.sigma = np.var(X, axis=0).reshape(-1, 1)
         assert self.mu.shape == (X.shape[1], 1)
         assert self.sigma.shape == (X.shape[1], 1)
@@ -84,6 +87,6 @@ class SimpleAnomalyDetector(BaseEstimator):
         term_4 = np.tile(term_4, len(X_test)).T
         term_5 = term_3 * term_4
         pdf_X = np.prod(term_5, axis=1)
-        assert pdf_X.shape == (X_test.shape[0],), f"The predicted probabilities must be a {X_test.shape[0]}-dimensional vector"
+        assert pdf_X.shape == (X_test.shape[0],), f"The predicted probability densities must be a {X_test.shape[0]}-dimensional vector"
         predictions = np.where(pdf_X < self.epsilon, 1, 0)
         return predictions
