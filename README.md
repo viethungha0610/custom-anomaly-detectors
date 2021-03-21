@@ -1,6 +1,6 @@
 # custom-anomaly-detectors
 
-<h1>Overview<h1>
+<h1>Overview</h1>
 
 A tiny package containing some custom anomaly detectors. In the <code>models.py</code> source code there are 4 detectors:
 
