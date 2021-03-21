@@ -55,7 +55,7 @@ class MultivariateGaussian(BaseEstimator):
         predictions = np.where(p_X < self.epsilon, 1, 0)
         return predictions
 
-class MultivariateTDistribution(MultivariateGaussian):
+class MultivariateT(MultivariateGaussian):
     """
     Anomaly detector using the 'fat-tail' Student's t-Distribution.
     """
@@ -158,8 +158,6 @@ class SimpleAnomalyDetector(BaseEstimator):
         predictions = np.where(pdf_X < self.epsilon, 1, 0)
         return predictions
         
-
-# INFLO class
 class INFLO(BaseEstimator):
     def __init__(self, contamination=None):
         """
@@ -208,11 +206,14 @@ class INFLO(BaseEstimator):
 
         # Picking outliers - selecting top-n observations with highest INFLO based on contamination
         top_n = int(self.contamination_ * len(data))
-        top_n_indices = self.INFLO_results_.argsort()[-top_n:][::-1]
+        top_n_indices = self.INFLO_results_.argsort()[::-1][:top_n] # This needs fixing
         anomaly_detection_results = np.zeros((self.INFLO_results_.shape[0],))
-        for index, item in enumerate(self.INFLO_results_):
-            if index in top_n_indices:
-                anomaly_detection_results[index] = int(1)
-            else:
-                anomaly_detection_results[index] = int(0)
-        return anomaly_detection_results
+        if top_n == 0:
+            return anomaly_detection_results
+        else:
+            for index, _ in enumerate(self.INFLO_results_):
+                if index in top_n_indices:
+                    anomaly_detection_results[index] = int(1)
+                else:
+                    anomaly_detection_results[index] = int(0)
+            return anomaly_detection_results

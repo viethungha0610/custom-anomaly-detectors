@@ -1,3 +1,5 @@
 *.csv
 creditcard_fraud_data/*
 .ipynb_checkpoints/*
+package_test.ipynb
+pyad/__pycache__/*
